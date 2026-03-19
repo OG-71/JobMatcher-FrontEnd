@@ -1,5 +1,5 @@
 // ── JobMatcher API Client (Supabase Auth + Node.js backend) ─────
-const API_BASE       = 'jobmatcher-backend-production.up.railway.app/api';
+const API_BASE       = 'https://jobmatcher-backend-production.up.railway.app/api';
 const SUPABASE_URL   = 'https://your-project-ref.supabase.co';  // ← replace
 const SUPABASE_ANON  = 'your-anon-key-here';                     // ← replace
 
