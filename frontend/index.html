@@ -78,7 +78,7 @@ textarea.fi{resize:none}
 .resend a{color:var(--br);cursor:pointer;font-weight:600}
 
 /* APP SHELL */
-#sapp{background:var(--bg)}
+#sapp{background:var(--bg);padding-bottom:0}
 .aph{background:var(--sur);border-bottom:1px solid var(--bdr);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100}
 .aplogo{font-weight:800;font-size:17px;color:var(--txt)}.aplogo em{color:var(--br);font-style:normal}
 .hright{display:flex;align-items:center;gap:8px}
@@ -87,8 +87,8 @@ textarea.fi{resize:none}
 [data-theme="dark"] .tt-knob{transform:translateX(26px)}
 .ndot{width:7px;height:7px;background:var(--acc);border-radius:50%;position:absolute;top:-1px;right:-1px}
 .avsm{width:32px;height:32px;border-radius:50%;background:var(--br);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;cursor:pointer;flex-shrink:0;border:2px solid var(--br-dk)}
-.apc{flex:1;overflow-y:auto;padding:16px 15px 96px}
-.bnav{background:var(--sur);border-top:1px solid var(--bdr);display:flex;padding:6px 0 10px;flex-shrink:0}
+.apc{flex:1;overflow-y:auto;padding:16px 15px 80px;-webkit-overflow-scrolling:touch}
+.bnav{background:var(--sur);border-top:1px solid var(--bdr);display:flex;padding:6px 0 10px;flex-shrink:0;position:fixed;bottom:0;left:0;right:0;z-index:100}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;position:relative;padding:3px 0}
 .nicon{font-size:18px;line-height:1}.nlbl{font-size:9px;font-weight:700;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase}
 .ni.on .nlbl{color:var(--br)}.nbadge{position:absolute;top:0;right:16%;background:var(--acc);color:#fff;font-size:8px;font-weight:700;border-radius:50px;padding:1px 5px;min-width:14px;text-align:center;font-family:'DM Mono',monospace}
@@ -989,7 +989,7 @@ async function offerFromBrowse(candidateId, candidateName){
     const firstJob=myJobs.jobs?.[0];
     const roomId=[user.id||user._id, candidateId].sort().join('_');
     const msg=firstJob
-      ? 'Hi '+candidateName+'! 👋 We think you\'d be a great fit for our '+ firstJob.title + ' role at ' + (user.company_name || user.name || 'our company') + '.We\'d love to connect — let us know if you\'re interested!'
+      ? 'Hi '+candidateName+'! 👋 We think you\'d be a great fit for our '+firstJob.title+' role at '+(user.company_name||user.name||'our company')+'. We\'d love to connect — let us know if you\'re interested!'
       : 'Hi '+candidateName+'! 👋 We found your profile very impressive and would love to connect about a potential opportunity at '+(user.company_name||user.name||'our company')+'.';
     await api.sendMessage({receiver_id: candidateId, text: msg, room_id: roomId});
     // Mark as acted
