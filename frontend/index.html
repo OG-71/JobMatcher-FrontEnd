@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>JobMatcher — HireSwiftLink</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -87,8 +87,8 @@ textarea.fi{resize:none}
 [data-theme="dark"] .tt-knob{transform:translateX(26px)}
 .ndot{width:7px;height:7px;background:var(--acc);border-radius:50%;position:absolute;top:-1px;right:-1px}
 .avsm{width:32px;height:32px;border-radius:50%;background:var(--br);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;cursor:pointer;flex-shrink:0;border:2px solid var(--br-dk)}
-.apc{flex:1;overflow-y:auto;padding:16px 15px 90px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.bnav{background:var(--sur);border-top:1px solid var(--bdr);display:flex;padding:6px 0 10px;flex-shrink:0;position:fixed;bottom:0;left:0;right:0;z-index:100}
+.apc{flex:1;overflow-y:auto;padding:16px 15px 110px;padding-bottom:calc(110px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.bnav{background:var(--sur);border-top:1px solid var(--bdr);display:flex;padding:6px 0 10px;padding-bottom:calc(10px + env(safe-area-inset-bottom));flex-shrink:0;position:fixed;bottom:0;left:0;right:0;z-index:100}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;position:relative;padding:3px 0}
 .nicon{font-size:18px;line-height:1}.nlbl{font-size:9px;font-weight:700;color:var(--txt3);letter-spacing:.4px;text-transform:uppercase}
 .ni.on .nlbl{color:var(--br)}.nbadge{position:absolute;top:0;right:16%;background:var(--acc);color:#fff;font-size:8px;font-weight:700;border-radius:50px;padding:1px 5px;min-width:14px;text-align:center;font-family:'DM Mono',monospace}
@@ -215,7 +215,7 @@ textarea.fi{resize:none}
 .cinfo{flex:1}.cname{font-size:13px;font-weight:700;color:var(--txt)}.cprev{font-size:11px;color:var(--txt3);margin-top:1px}
 .cmeta{text-align:right;font-size:10px;color:var(--txt3)}
 .unrd{background:var(--br);color:#fff;border-radius:50px;padding:1px 6px;font-size:9px;font-weight:700;display:inline-block;margin-top:3px;font-family:'DM Mono',monospace}
-.cwin{display:none;flex-direction:column;overflow:hidden;position:fixed;top:56px;left:0;right:0;bottom:68px;background:var(--bg);z-index:50;padding:0 15px}.cwin.open{display:flex}
+.cwin{display:none;flex-direction:column;overflow:hidden;position:fixed;top:56px;left:0;right:0;bottom:calc(68px + env(safe-area-inset-bottom));background:var(--bg);z-index:50;padding:0 15px}.cwin.open{display:flex}
 .cmsgs{padding:12px 0;display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch}
 .msg{max-width:76%;padding:9px 12px;border-radius:12px;font-size:12px;line-height:1.55}
 .msg.them{background:var(--sur3);color:var(--txt);border-bottom-left-radius:3px;border:1px solid var(--bdr);align-self:flex-start}
