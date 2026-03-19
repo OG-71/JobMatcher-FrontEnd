@@ -1423,4 +1423,4 @@ function toast(msg){const t=document.createElement('div');t.className='toast';t.
 function toggleUserMenu(){const m=document.getElementById('user-menu');m.style.display=m.style.display==='none'?'block':'none';}
 function closeUserMenu(){const m=document.getElementById('user-menu');if(m)m.style.display='none';}
 document.addEventListener('click',e=>{const menu=document.getElementById('user-menu');const av=document.getElementById('apav');if(menu&&av&&!menu.contains(e.target)&&!av.contains(e.target))menu.style.display='none';});
-function logout(){api.clearToken();api.clearUser();if(socket)socket.disconnect();closeUserMenu();showScr('sh');}
+function logout(){api.clearToken();api.clearUser();if(socket)socket.disconnect();closeUserMenu();showScr('sh');}</script>
