@@ -587,7 +587,7 @@ textarea.fi{resize:none}
 <script>
 // ── State ────────────────────────────────────────
 let role = 'seeker', regUserId = null, aF = 'All';
-let swCards = [], swIdx = 0, pendSwipe = null, curChat = null, curRoomId = null;
+let swCards = [], swIdx = 0, pendSwipe = null, curChat = null, curRoomId = null, curPartnerId = null;
 let curAppId = null, socket = null;
 const STEPS = ['sent','received','viewed','pending','accepted'];
 let mapCurLoc = {};
@@ -1289,6 +1289,7 @@ async function openChat(roomId,partnerId,name,init){
   // Leave previous room
   if(curRoomId && curRoomId!==roomId) socket?.emit('leave_room', curRoomId);
   curRoomId=roomId;
+  curPartnerId=partnerId; // store partner for sendMsg
   document.getElementById('cw-av').textContent=init;
   document.getElementById('cw-nm').textContent=name;
   // Clear messages before loading
@@ -1318,7 +1319,7 @@ async function sendMsg(){
   inp.value='';
   const me=api.getUser();
   appendMsg({text:txt,createdAt:new Date()},true);
-  try{await api.sendMessage({room_id:curRoomId,receiver_id:curRoomId.split('_').find(id=>id!==(api.getUser().id||api.getUser()._id)),text:txt});}catch(e){toast('Failed to send message');}
+  try{await api.sendMessage({room_id:curRoomId,receiver_id:curPartnerId,text:txt});}catch(e){toast('Failed to send message: '+e.message);}
 }
 function showSched(){document.getElementById('sched-modal').classList.add('open')}
 function closeSched(){document.getElementById('sched-modal').classList.remove('open')}
@@ -1350,7 +1351,7 @@ async function confirmSched(){
   // Also send as real message so partner sees it
   const me=api.getUser();
   const msgText='📅 Interview Proposal: '+fmt+' on '+dt+' at '+tm+(nt?' — '+nt:'');
-  try{ await api.sendMessage({room_id:curRoomId,receiver_id:curRoomId.split('_').find(id=>id!==(me.id||me._id)),text:msgText}); }catch(e){}
+  try{ await api.sendMessage({room_id:curRoomId,receiver_id:curPartnerId,text:msgText}); }catch(e){}
   toast('Interview proposal sent — both parties emailed!');
 }
 function pollVote(pollId, vote){
@@ -1422,4 +1423,4 @@ function toast(msg){const t=document.createElement('div');t.className='toast';t.
 function toggleUserMenu(){const m=document.getElementById('user-menu');m.style.display=m.style.display==='none'?'block':'none';}
 function closeUserMenu(){const m=document.getElementById('user-menu');if(m)m.style.display='none';}
 document.addEventListener('click',e=>{const menu=document.getElementById('user-menu');const av=document.getElementById('apav');if(menu&&av&&!menu.contains(e.target)&&!av.contains(e.target))menu.style.display='none';});
-function logout(){api.clearToken();api.clearUser();if(socket)socket.disconnect();closeUserMenu();showScr('sh');}</script>
+function logout(){api.clearToken();api.clearUser();if(socket)socket.disconnect();closeUserMenu();showScr('sh');}
