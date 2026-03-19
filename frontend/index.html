@@ -865,11 +865,10 @@ async function loadBrowse() {
   const user = api.getUser();
   try {
     if (user.role === 'employer') {
-      // Load ALL seekers for employer browse
+      // Load ALL seekers for employer browse — never filter by acted cards here
+      // acted cards only affect the Matches swipe deck
       const { matches } = await api.getMatches();
-      // getMatches returns scored seekers — but we want ALL seekers too
-      // Use matches endpoint which returns all seekers with scores (0% included)
-      allItems = matches;
+      allItems = matches; // all seekers, no acted filter
       renderBrowse();
     } else {
       const { jobs } = await api.getJobs();
@@ -903,7 +902,7 @@ function renderBrowse() {
         : '<span style="background:var(--sur3);color:var(--txt3);padding:2px 8px;border-radius:50px;font-size:9px;font-weight:600;border:1px solid var(--bdr)">'+score+'% match</span>';
       const allSkills=(c.skills||[]).map(s=>'<span class="tag">'+s+'</span>').join('') || '<span style="color:var(--txt3);font-size:11px">No skills listed</span>';
       const workPref=c.work_preference||c.workPreference||'Not specified';
-      const acted=getActedCards().includes(cid);
+      const sentOffers=JSON.parse(localStorage.getItem('jm_sent_offers')||'[]'); const acted=sentOffers.includes(cid);
       return '<div class="jcard" id="ccard-'+cid+'">'
         // ── Card header (always visible) ──
         +'<div style="display:flex;align-items:center;gap:10px">'
@@ -992,10 +991,12 @@ async function offerFromBrowse(candidateId, candidateName){
       ? 'Hi '+candidateName+'! 👋 We think you\'d be a great fit for our '+firstJob.title+' role at '+(user.company_name||user.name||'our company')+'. We\'d love to connect — let us know if you\'re interested!'
       : 'Hi '+candidateName+'! 👋 We found your profile very impressive and would love to connect about a potential opportunity at '+(user.company_name||user.name||'our company')+'.';
     await api.sendMessage({receiver_id: candidateId, text: msg, room_id: roomId});
-    // Mark as acted
-    addActedCard(candidateId);
-    // Update button
+    // Only update THIS button — don't mark as acted globally
+    // (acted cards only apply to swipe deck, not browse tab)
     if(btn){ btn.textContent='✓ Offer Sent'; btn.classList.add('sent'); }
+    // Save sent offers per employer in localStorage so button stays after refresh
+    const sentOffers = JSON.parse(localStorage.getItem('jm_sent_offers')||'[]');
+    if(!sentOffers.includes(candidateId)){ sentOffers.push(candidateId); localStorage.setItem('jm_sent_offers', JSON.stringify(sentOffers)); }
     toast('Offer sent to '+candidateName+'! 💼');
     loadChats();
     // Notify via socket
