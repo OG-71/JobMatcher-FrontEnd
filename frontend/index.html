@@ -1267,27 +1267,68 @@ async function loadEmpAppl(){
   try{
     const {applications}=await api.getEmpApps();
     const el=document.getElementById('emp-appl');
-    if(!applications.length){el.innerHTML=`<div style="text-align:center;padding:36px;color:var(--txt3)"><div style="font-size:36px;margin-bottom:8px">👥</div><p>No applications yet</p></div>`;return;}
+    if(!applications.length){
+      el.innerHTML='<div style="text-align:center;padding:36px;color:var(--txt3)"><div style="font-size:36px;margin-bottom:8px">👥</div><p>No applications yet</p></div>';
+      return;
+    }
     el.innerHTML=applications.map(a=>{
       const seekerName=a.seeker?.name||'Applicant';
       const init=seekerName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
       const aid=a.id||a._id;
+      const sid=a.seeker?.id||a.seeker_id;
       const score=a.match_score||a.matchScore||0;
       const status=a.status||'sent';
       const occ=a.seeker?.occupation||'';
-      const skills=(a.seeker?.skills||[]).slice(0,3).map(s=>'<span style="background:var(--br-lt);color:var(--br-dkk);padding:2px 7px;border-radius:50px;font-size:9px;font-weight:600;border:1px solid var(--br-md);margin:1px;display:inline-block">'+s+'</span>').join('');
+      const exp=a.seeker?.experience||'';
+      const wp=a.seeker?.work_preference||a.seeker?.workPreference||'';
+      const qual=a.seeker?.qualifications||'';
+      const allSkills=(a.seeker?.skills||[]).map(s=>'<span class="tag">'+s+'</span>').join('')||'<span style="color:var(--txt3);font-size:11px">None listed</span>';
+
       const statusBadge=status==='accepted'
         ? '<span style="font-size:9px;font-weight:700;color:#10b981;background:#d1fae5;padding:2px 7px;border-radius:50px;border:1px solid #6ee7b7">✓ Accepted</span>'
         : status==='denied'
         ? '<span style="font-size:9px;font-weight:700;color:#ef4444;background:#fee2e2;padding:2px 7px;border-radius:50px;border:1px solid #fca5a5">✗ Declined</span>'
-        : '<span style="font-size:9px;font-weight:700;color:var(--br);background:var(--br-lt);padding:2px 7px;border-radius:50px;border:1px solid var(--br-md)">'+status+'</span>';
-      const viewBtn='<button onclick="viewApplication(&quot;'+aid+'&quot;)" style="background:var(--sur3);color:var(--txt2);border:1px solid var(--bdr);border-radius:6px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;margin-right:4px">👁 View</button>';
-      const btns=status==='accepted'||status==='denied'
-        ? viewBtn
-        : viewBtn+'<button class="abtn-acc" onclick="updateStatus(&quot;'+aid+'&quot;,&quot;accepted&quot;)">✓ Accept</button> <button class="abtn-dec" onclick="updateStatus(&quot;'+aid+'&quot;,&quot;denied&quot;)">✗ Decline</button>';
-      return '<div class="appl-item" style="flex-wrap:wrap"><div class="appl-ava">'+init+'</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--txt)">'+seekerName+'</div><div style="font-size:10px;color:var(--txt3);margin-top:1px">'+(a.job?.title||'Job')+(occ?' · '+occ:'')+' · '+score+'% · '+statusBadge+'</div><div style="margin-top:4px">'+skills+'</div></div><div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">'+btns+'</div></div>';
+        : status==='pending'
+        ? '<span style="font-size:9px;font-weight:700;color:#f97316;background:#fff7ed;padding:2px 7px;border-radius:50px;border:1px solid #fed7aa">⏳ Pending</span>'
+        : status==='viewed'
+        ? '<span style="font-size:9px;font-weight:700;color:var(--br);background:var(--br-lt);padding:2px 7px;border-radius:50px;border:1px solid var(--br-md)">👁 Viewed</span>'
+        : '<span style="font-size:9px;font-weight:700;color:var(--txt3);background:var(--sur3);padding:2px 7px;border-radius:50px;border:1px solid var(--bdr)">New</span>';
+
+      // Expanded details section
+      const detailsHtml='<div class="jdetails" id="adet-'+aid+'">'
+        +'<div class="jdrow"><span class="jdkey">Occupation</span><span class="jdval">'+(occ||'Not specified')+'</span></div>'
+        +'<div class="jdrow"><span class="jdkey">Qualifications</span><span class="jdval">'+(qual||'Not specified')+'</span></div>'
+        +'<div class="jdrow"><span class="jdkey">Experience</span><span class="jdval">'+(exp||'Not specified')+'</span></div>'
+        +'<div class="jdrow"><span class="jdkey">Work Preference</span><span class="jdval">'+(wp||'Not specified')+'</span></div>'
+        +'<div class="jdrow"><span class="jdkey">Match Score</span><span class="jdval" style="color:var(--br);font-weight:700">'+score+'%</span></div>'
+        +'<div style="margin-top:8px"><div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Skills</div>'+allSkills+'</div>'
+        // Action buttons inside expanded view
+        +'<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">'
+        +(status==='denied'
+          ? '<span style="font-size:11px;color:var(--txt3);font-style:italic">Application declined</span>'
+          : status==='accepted'
+          ? '<button onclick="sendAcceptMsg(&quot;'+aid+'&quot;,&quot;'+sid+'&quot;,&quot;'+seekerName+'&quot;,&quot;'+(a.job?.title||'the position')+'&quot;)" style="background:var(--br);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:10px;font-weight:700;cursor:pointer">💬 Message</button>'
+            +' <button onclick="updateStatus(&quot;'+aid+'&quot;,&quot;denied&quot;)" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:6px;padding:6px 12px;font-size:10px;font-weight:700;cursor:pointer">↩ Revoke</button>'
+          : '<button class="abtn-acc" onclick="acceptApplicant(&quot;'+aid+'&quot;,&quot;'+sid+'&quot;,&quot;'+seekerName+'&quot;,&quot;'+(a.job?.title||'the position')+'&quot;)">✓ Accept</button>'
+            +' <button class="abtn-dec" onclick="updateStatus(&quot;'+aid+'&quot;,&quot;denied&quot;)">✗ Decline</button>'
+        )
+        +'</div>'
+        +'</div>';
+
+      return '<div class="appl-item" id="acard-'+aid+'" style="flex-direction:column;align-items:stretch">'
+        // Header row
+        +'<div style="display:flex;gap:9px;align-items:center">'
+        +'<div class="appl-ava">'+init+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--txt)">'+seekerName+'</div>'
+        +'<div style="font-size:10px;color:var(--txt3);margin-top:1px">'+(a.job?.title||'Job')+(occ?' · '+occ:'')+' · '+statusBadge+'</div>'
+        +'</div>'
+        +'<button class="view-btn" id="aviewbtn-'+aid+'" onclick="toggleApplCard(&quot;'+aid+'&quot;)" style="width:auto;padding:4px 10px;font-size:10px;margin:0">▼ View</button>'
+        +'</div>'
+        + detailsHtml
+        +'</div>';
     }).join('');
-  }catch(e){}
+  }catch(e){ console.error(e); }
 }
 async function deleteJob(id){
   if(!confirm('Remove this posting?'))return;
@@ -1297,20 +1338,63 @@ async function deleteJob(id){
     await loadEmpJobs(); // reload just the postings list
   }catch(e){toast('Error: '+e.message);}
 }
-function viewApplication(id){
-  // Find application in loaded list and show details modal
-  const empApplEl=document.getElementById('emp-appl');
-  const cards=[...empApplEl.querySelectorAll('.appl-item')];
-  toast('Viewing application — check applicant details above');
-  // Highlight the card
-  cards.forEach(c=>{
-    const btn=c.querySelector('button[onclick*="'+id+'"]');
-    if(btn){
-      c.style.border='2px solid var(--br)';
-      c.scrollIntoView({behavior:'smooth',block:'center'});
-      setTimeout(()=>c.style.border='1px solid var(--bdr)',2000);
+// Toggle application card expand — marks as viewed on first open
+async function toggleApplCard(aid){
+  const card=document.getElementById('acard-'+aid);
+  const det=document.getElementById('adet-'+aid);
+  const btn=document.getElementById('aviewbtn-'+aid);
+  if(!card||!det||!btn)return;
+  const isOpen=card.classList.contains('expanded');
+  if(isOpen){
+    card.classList.remove('expanded');
+    det.style.display='none';
+    btn.innerHTML='▼ View';
+    btn.classList.remove('open');
+  } else {
+    card.classList.add('expanded');
+    det.style.display='block';
+    btn.innerHTML='▲ Hide';
+    btn.classList.add('open');
+    // Mark as viewed — updates seeker status tracker
+    const currentStatus=card.querySelector('[id^="adet-"]')?.dataset?.status;
+    if(!currentStatus||currentStatus==='sent'||currentStatus==='received'){
+      try{
+        await api.updateAppStatus(aid,'viewed');
+        if(socket) socket.emit('application_status_changed',{applicationId:aid,status:'viewed'});
+      }catch(e){}
     }
-  });
+  }
+}
+
+// Accept + immediately send congrats message
+async function acceptApplicant(aid, seekerId, seekerName, jobTitle){
+  try{
+    await api.updateAppStatus(aid,'accepted');
+    await loadEmpAppl();
+    await loadEmpJobs();
+    toast(seekerName+' accepted! Slot filled ✓');
+    if(socket) socket.emit('application_status_changed',{applicationId:aid,status:'accepted'});
+    // Status on seeker side updates to pending first (awaiting message)
+    await api.updateAppStatus(aid,'pending');
+    if(socket) socket.emit('application_status_changed',{applicationId:aid,status:'pending'});
+    await loadEmpAppl();
+  }catch(e){toast('Error: '+e.message);}
+}
+
+// Send congratulations message — finalises acceptance
+async function sendAcceptMsg(aid, seekerId, seekerName, jobTitle){
+  const user=api.getUser();
+  const roomId=[user.id||user._id, seekerId].sort().join('_');
+  const msg='🎉 Congratulations '+seekerName+'! We are pleased to inform you that your application for the '+jobTitle+' position has been accepted. Welcome to the team! We will be in touch shortly with next steps.';
+  try{
+    await api.sendMessage({room_id:roomId, receiver_id:seekerId, text:msg});
+    // Update status to accepted
+    await api.updateAppStatus(aid,'accepted');
+    if(socket) socket.emit('application_status_changed',{applicationId:aid,status:'accepted'});
+    toast('Congratulations message sent! ✓');
+    await loadEmpAppl();
+    loadChats();
+  }catch(e){toast('Error: '+e.message);}
 }
 async function updateStatus(id,status){
   try{
@@ -1318,7 +1402,7 @@ async function updateStatus(id,status){
     // Always reload both applicants list AND job postings (slots change on accept/deny)
     await loadEmpAppl();
     await loadEmpJobs(); // refreshes slot counts and stats row
-    toast(status==='accepted'?'Applicant accepted! Slot filled ✓':'Applicant declined — slot freed');
+    if(status!=='accepted'&&status!=='pending') toast(status==='denied'?'Applicant declined — slot freed':'Status updated');
     // Notify seeker via socket
     if(socket) socket.emit('application_status_changed',{applicationId:id,status});
   }catch(e){toast('Error: '+e.message);}
@@ -1388,10 +1472,10 @@ function appendMsg(m,isMe){
       wrapper.style.cssText='align-self:'+(isMe?'flex-end':'flex-start')+';max-width:92%;width:100%;margin:4px 0';
       if(isMe){
         // Employer sees their sent poll as a simple sent card
-        wrapper.innerHTML='<div class="intv-card"><div class="intv-title">Interview Proposal Sent</div>'
+        wrapper.innerHTML='<div class="intv-card"><div class="intv-title">📅 Interview Proposal Sent</div>'
           +'<div style="font-size:12px;font-weight:700;color:var(--txt)">'+data.fmt+'</div>'
-          +'<div style="font-size:11px;color:var(--txt3);font-family:"DM Mono","monospace">'+data.dt+' · '+data.tm+'</div>'
-          +(data.nt?'<div style="font-size:11px;color:var(--txt2);margin-top:4px">'+data.nt+'</div>':'')
+          +'<div style="font-size:11px;color:var(--txt3);font-family:"DM Mono","monospace"">'+data.dt+' · '+data.tm+'</div>'
+          +(data.nt?'<div style="font-size:11px;color:var(--txt2);margin-top:4px">📝 '+data.nt+'</div>':'')
           +'<div style="font-size:10px;color:var(--txt3);margin-top:6px;font-weight:600">Awaiting response...</div>'
           +'</div>';
       } else {
@@ -1439,11 +1523,11 @@ async function confirmSched(){
   const pollHtml='<div class="intv-card" id="'+pollId+'">'
     +'<div class="intv-title">📅 Interview Proposal</div>'
     +'<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">'+fmt+'</div>'
-    +'<div style="font-size:11px;color:var(--txt3);font-family:"DM Mono","monospace";margin-bottom:'+(nt?'4px':'8px')+'">'+dt+' · '+tm+'</div>'
-    +(nt?'<div style="font-size:11px;color:var(--txt2);margin-bottom:8px"> '+nt+'</div>':'')
+    +'<div style="font-size:11px;color:var(--txt3);font-family:"DM Mono",monospace;margin-bottom:'+(nt?'4px':'8px')+'">'+dt+' · '+tm+'</div>'
+    +(nt?'<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">📝 '+nt+'</div>':'')
     +'<div style="display:flex;flex-direction:column;gap:6px">'
-    +'<button onclick="pollVote(&quot;'+pollId+'&quot;,&quot;accepted&quot;)" style="background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:700;font-size:11px;cursor:pointer;text-align:left">This works for me</button>'
-    +'<button onclick="pollVote(&quot;'+pollId+'&quot;,&quot;declined&quot;)" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:700;font-size:11px;cursor:pointer;text-align:left">Let\'s try something different</button>'
+    +'<button onclick="pollVote(&quot;'+pollId+'&quot;,&quot;accepted&quot;)" style="background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:700;font-size:11px;cursor:pointer;text-align:left">✅ This works for me</button>'
+    +'<button onclick="pollVote(&quot;'+pollId+'&quot;,&quot;declined&quot;)" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:700;font-size:11px;cursor:pointer;text-align:left">🔄 Let\'s try something different</button>'
     +'</div>'
     +'<div style="font-size:10px;color:var(--txt3);margin-top:8px;font-weight:600">Email sent to both parties ✓</div>'
     +'</div>';
