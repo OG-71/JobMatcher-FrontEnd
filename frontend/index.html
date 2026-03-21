@@ -759,6 +759,7 @@ function enterApp(user) {
   document.getElementById('ppel').innerHTML = avatarUrl
     ? '<img src="'+avatarUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
     : '<span id="pinit">'+init+'</span>';
+
   if(pinitEl) pinitEl.textContent = init;
 
   if (isE) {
@@ -1306,9 +1307,8 @@ async function loadEmpAppl(){
         +'<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">'
         +(status==='denied'
           ? '<span style="font-size:11px;color:var(--txt3);font-style:italic">Application declined</span>'
-          : status==='accepted'
-          ? '<button onclick="sendAcceptMsg(&quot;'+aid+'&quot;,&quot;'+sid+'&quot;,&quot;'+seekerName+'&quot;,&quot;'+(a.job?.title||'the position')+'&quot;)" style="background:var(--br);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:10px;font-weight:700;cursor:pointer">💬 Message</button>'
-            +' <button onclick="updateStatus(&quot;'+aid+'&quot;,&quot;denied&quot;)" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:6px;padding:6px 12px;font-size:10px;font-weight:700;cursor:pointer">↩ Revoke</button>'
+          : status==='pending'||status==='accepted'
+          ? '<span style="font-size:11px;color:#10b981;font-weight:600">✓ Use the buttons above to message or revoke</span>'
           : '<button class="abtn-acc" onclick="acceptApplicant(&quot;'+aid+'&quot;,&quot;'+sid+'&quot;,&quot;'+seekerName+'&quot;,&quot;'+(a.job?.title||'the position')+'&quot;)">✓ Accept</button>'
             +' <button class="abtn-dec" onclick="updateStatus(&quot;'+aid+'&quot;,&quot;denied&quot;)">✗ Decline</button>'
         )
@@ -1316,14 +1316,22 @@ async function loadEmpAppl(){
         +'</div>';
 
       return '<div class="appl-item" id="acard-'+aid+'" style="flex-direction:column;align-items:stretch">'
-        // Header row
-        +'<div style="display:flex;gap:9px;align-items:center">'
+        // Header row — accepted/pending show action buttons directly, others show View
+        +'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">'
         +'<div class="appl-ava">'+init+'</div>'
         +'<div style="flex:1;min-width:0">'
         +'<div style="font-size:12px;font-weight:700;color:var(--txt)">'+seekerName+'</div>'
         +'<div style="font-size:10px;color:var(--txt3);margin-top:1px">'+(a.job?.title||'Job')+(occ?' · '+occ:'')+' · '+statusBadge+'</div>'
         +'</div>'
-        +'<button class="view-btn" id="aviewbtn-'+aid+'" onclick="toggleApplCard(&quot;'+aid+'&quot;)" style="width:auto;padding:4px 10px;font-size:10px;margin:0">▼ View</button>'
+        +(status==='pending'||status==='accepted'
+          // Accepted/Pending: show Message + Revoke inline, no View button
+          ? '<div style="display:flex;gap:5px;align-items:center">'
+            +'<button onclick="sendAcceptMsg(&quot;'+aid+'&quot;,&quot;'+sid+'&quot;,&quot;'+seekerName+'&quot;,&quot;'+(a.job?.title||'the position')+'&quot;)" style="background:var(--br);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer">💬 Message</button>'
+            +' <button onclick="updateStatus(&quot;'+aid+'&quot;,&quot;denied&quot;)" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer">↩ Revoke</button>'
+            +'</div>'
+          // Others: show View button
+          : '<button class="view-btn" id="aviewbtn-'+aid+'" onclick="toggleApplCard(&quot;'+aid+'&quot;)" style="width:auto;padding:4px 10px;font-size:10px;margin:0">▼ View</button>'
+        )
         +'</div>'
         + detailsHtml
         +'</div>';
@@ -1366,18 +1374,15 @@ async function toggleApplCard(aid){
   }
 }
 
-// Accept + immediately send congrats message
+// Accept applicant — sets to pending on seeker side, Revoke+Message shown to employer
 async function acceptApplicant(aid, seekerId, seekerName, jobTitle){
   try{
-    await api.updateAppStatus(aid,'accepted');
-    await loadEmpAppl();
-    await loadEmpJobs();
-    toast(seekerName+' accepted! Slot filled ✓');
-    if(socket) socket.emit('application_status_changed',{applicationId:aid,status:'accepted'});
-    // Status on seeker side updates to pending first (awaiting message)
+    // Set to pending — seeker sees "Pending" on their tracker
     await api.updateAppStatus(aid,'pending');
     if(socket) socket.emit('application_status_changed',{applicationId:aid,status:'pending'});
     await loadEmpAppl();
+    await loadEmpJobs();
+    toast(seekerName+' accepted! Send them a message to finalise. ✓');
   }catch(e){toast('Error: '+e.message);}
 }
 
@@ -1385,13 +1390,13 @@ async function acceptApplicant(aid, seekerId, seekerName, jobTitle){
 async function sendAcceptMsg(aid, seekerId, seekerName, jobTitle){
   const user=api.getUser();
   const roomId=[user.id||user._id, seekerId].sort().join('_');
-  const msg='🎉 Congratulations '+seekerName+'! We are pleased to inform you that your application for the '+jobTitle+' position has been accepted. Welcome to the team! We will be in touch shortly with next steps.';
+  const msg='🎉 Congratulations '+seekerName+'! We are pleased to inform you that your application for the *'+jobTitle+'* position has been accepted. Welcome aboard! We will be in touch shortly with next steps.';
   try{
     await api.sendMessage({room_id:roomId, receiver_id:seekerId, text:msg});
-    // Update status to accepted
+    // Now set status to accepted — seeker sees all dots filled
     await api.updateAppStatus(aid,'accepted');
     if(socket) socket.emit('application_status_changed',{applicationId:aid,status:'accepted'});
-    toast('Congratulations message sent! ✓');
+    toast('Congratulations message sent! Application marked as accepted ✓');
     await loadEmpAppl();
     loadChats();
   }catch(e){toast('Error: '+e.message);}
@@ -1613,3 +1618,5 @@ function toggleUserMenu(){const m=document.getElementById('user-menu');m.style.d
 function closeUserMenu(){const m=document.getElementById('user-menu');if(m)m.style.display='none';}
 document.addEventListener('click',e=>{const menu=document.getElementById('user-menu');const av=document.getElementById('apav');if(menu&&av&&!menu.contains(e.target)&&!av.contains(e.target))menu.style.display='none';});
 function logout(){api.clearToken();api.clearUser();if(socket)socket.disconnect();closeUserMenu();showScr('sh');}</script>
+</body>
+</html>
